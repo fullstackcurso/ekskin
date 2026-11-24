@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EKSkin &middot; Repositorio de addons para Kodi</title>
+<style>
+* { box-sizing:border-box; }
+body { margin:0; padding:0 16px 32px; min-height:100vh; font-size:14px;
+       background:var(--escritorio); background-attachment:fixed; color:var(--tx);
+       font-family:var(--fuente); }
+.center { max-width:720px; margin:0 auto; }
+.window { position:relative; }
+.title { display:flex; align-items:stretch; user-select:none; }
+.titulo { flex:1; display:flex; align-items:center; gap:6px; min-width:0; }
+.titulo img { width:16px; height:16px; }
+.controles { display:flex; }
+.cb { display:flex; align-items:center; justify-content:center; padding:0; margin:0;
+      font:inherit; cursor:default; }
+.cb svg { width:10px; height:10px; fill:none; stroke:currentColor; }
+.cb .tapa { stroke-width:var(--tapa,0); }
+/* Minimizar: barra baja y corta en 95, XP, 7 y Linux; linea de punta a punta en 10 y 11 */
+.cb .medio { display:none; }
+[data-so="10"] .cb .bajo, [data-so="11"] .cb .bajo { display:none; }
+[data-so="10"] .cb .medio, [data-so="11"] .cb .medio { display:inline; }
+.luces { display:none; align-items:center; gap:8px; padding:0 12px; }
+.luces i { width:12px; height:12px; border-radius:50%; display:block; }
+.luces i:nth-child(1) { background:#ff5f57; box-shadow:inset 0 0 0 .5px #e0443e; }
+.luces i:nth-child(2) { background:#febc2e; box-shadow:inset 0 0 0 .5px #dea123; }
+.luces i:nth-child(3) { background:#28c840; box-shadow:inset 0 0 0 .5px #1aab29; }
+h2 { font-size:14px; margin:22px 0 8px; padding-bottom:3px;
+     border-bottom:1px solid var(--linea); }
+a { color:var(--enlace); }
+a:visited { color:var(--enlace); }
+ol, ul { margin:6px 0; padding-left:22px; }
+li { margin-bottom:7px; }
+p { margin:10px 0; }
+code, .mono { background:var(--code-bg); border:1px solid var(--code-bc); padding:1px 4px;
+              font-family:"Courier New",monospace; border-radius:var(--rad-code,0); }
+.note { background:var(--nota-bg); border:1px solid var(--nota-bc); padding:8px 10px;
+        margin:10px 0; border-radius:var(--rad-code,0); }
+.botones { display:flex; gap:10px; justify-content:center; margin:18px 0 6px; flex-wrap:wrap; }
+.boton { display:inline-block; text-align:center; text-decoration:none; cursor:pointer;
+         font:inherit; font-weight:bold; color:var(--b-color); min-width:140px; padding:8px 18px; }
+.boton:visited { color:var(--b-color); }
+.bar { margin-top:16px; padding:5px 8px; font-size:12px; background:var(--bar-bg);
+       border:var(--bar-borde); }
+
+/* Selector de estilo: panel de cristal con una miniatura de cada ventana */
+.selector { max-width:720px; margin:18px auto 22px; padding:10px 12px 12px; border-radius:20px;
+            background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.38);
+            backdrop-filter:blur(16px) saturate(1.5); -webkit-backdrop-filter:blur(16px) saturate(1.5);
+            box-shadow:0 14px 40px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.45);
+            font-family:"Segoe UI",system-ui,-apple-system,sans-serif; }
+.selector-titulo { display:flex; align-items:center; gap:14px; color:#fff; font-size:12px;
+                   letter-spacing:.22em; text-transform:uppercase; opacity:.9; margin:4px 8px 18px;
+                   text-shadow:0 1px 3px rgba(0,0,0,.45); white-space:nowrap; }
+.selector-titulo::before, .selector-titulo::after { content:""; flex:1; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.6)); }
+.selector-titulo::after { transform:scaleX(-1); }
+.temas { display:flex; justify-content:center; flex-wrap:wrap; gap:4px; }
+.tema { display:flex; flex-direction:column; align-items:center; gap:7px; width:84px;
+        padding:9px 4px 8px; border-radius:14px; color:#fff; font-size:12px; font-weight:600;
+        text-shadow:0 1px 3px rgba(0,0,0,.5); cursor:pointer; outline:0;
+        transition:transform .18s ease, background .18s ease, box-shadow .18s ease; }
+.tema:hover { background:rgba(255,255,255,.16); transform:translateY(-3px); }
+.tema:focus-visible { box-shadow:0 0 0 2px #fff; }
+.tema[aria-checked="true"] { background:rgba(255,255,255,.3); transform:translateY(-4px);
+  box-shadow:0 0 0 1.5px rgba(255,255,255,.9), 0 0 22px rgba(255,255,255,.55), 0 10px 20px rgba(0,0,0,.35); }
+.mini { position:relative; width:58px; height:38px; border-radius:7px; background:var(--d);
+        overflow:hidden; box-shadow:0 3px 8px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.25);
+        transition:transform .18s ease; }
+.tema[aria-checked="true"] .mini { transform:scale(1.1); }
+.mini::before { content:""; position:absolute; left:7px; top:8px; width:44px; height:24px;
+                border-radius:var(--mr,0); background:linear-gradient(var(--t) 0 6px, var(--w) 6px);
+                box-shadow:0 2px 5px rgba(0,0,0,.5), 0 0 0 var(--mb,1px) var(--mc,rgba(0,0,0,.6)); }
+/* Los tres botones de la ventana: el de cerrar es el ::after y los otros dos son sus sombras */
+.mini::after { content:""; position:absolute; left:var(--px,46.5px); top:var(--py,9.5px); width:3px; height:3px;
+               border-radius:var(--pr,0); background:var(--p,#fff);
+               box-shadow:var(--pe,-4.5px 0 var(--p2,#888), -9px 0 var(--p2,#888)); }
+.tema[data-so="95"] .mini { --d:#008080; --t:#000080; --w:#c0c0c0; --p:#c0c0c0; --p2:#c0c0c0; --mc:#c0c0c0; --mb:1px; }
+.tema[data-so="xp"] .mini { --d:linear-gradient(#2d6bd8 0 55%,#4e9a26 56%); --t:linear-gradient(#0a5bf0,#0044d0);
+  --w:#ece9d8; --mr:3px 3px 0 0; --mc:#0831d9; --mb:1.5px; --p:#e0501e; --p2:#7fa6f5; --pr:1px; }
+.tema[data-so="7"] .mini { --d:radial-gradient(ellipse at 50% 20%,#59b6ee,#1d74c3 55%,#0a3d7d);
+  --t:#a9c8ea; --w:#fff; --mr:3px; --mc:rgba(255,255,255,.75); --mb:1.5px; --p:#d9503a; --p2:#6f8fbd; --pr:1px; }
+.tema[data-so="10"] .mini { --d:linear-gradient(135deg,#06265c,#0078d7 60%,#2fb1f2);
+  --t:#fff; --w:#fff; --mc:#777; --p:#222; --p2:#222; }
+.tema[data-so="11"] .mini { --d:radial-gradient(ellipse at 28% 38%,#9ccbff,#3f86ea 40%,#1c2c8a);
+  --t:#f1f1f1; --w:#fff; --mr:4px; --mc:rgba(0,0,0,.2); --p:#222; --p2:#222; }
+.tema[data-so="linux"] .mini { --d:#37474f;
+  --t:#2b2d31; --w:#1f1f1f; --mr:4px; --mc:rgba(0,0,0,.5); --p:#c4c7c5; --p2:#c4c7c5; --pr:50%; }
+.tema[data-so="mac"] .mini { --d:linear-gradient(135deg,#071a2e,#0b4a6b 55%,#0a2c47);
+  --t:#dcdadd; --w:#fff; --mr:4px; --mc:rgba(0,0,0,.3); --p:#ff5f57; --pr:50%; --px:10px;
+  --pe:3.5px 0 #febc2e, 7px 0 #28c840; }
+@media (prefers-reduced-motion:reduce) { .tema, .mini { transition:none; } }
+@media (max-width:520px) { .tema { width:72px; } }
+
+/* Windows 95 */
+body[data-so="95"] { --escritorio:#008080; --tx:#000; --enlace:#000080; --linea:#808080;
+  --code-bg:#fff; --code-bc:#808080; --nota-bg:#ffffe1; --nota-bc:#808080;
+  --bar-bg:#c0c0c0; --bar-borde:1px solid; --b-color:#000; --tapa:2;
+  --fuente:Tahoma,"MS Sans Serif",sans-serif; }
+[data-so="95"] .window { background:#c0c0c0; padding:2px; border:1px solid;
+  border-color:#dfdfdf #000 #000 #dfdfdf; box-shadow:inset 1px 1px #fff, inset -1px -1px #808080; }
+[data-so="95"] .title { background:#000080; color:#fff; font-weight:bold; font-size:13px;
+  padding:2px; height:20px; }
+[data-so="95"] .controles { gap:0; }
+[data-so="95"] .cb { width:16px; height:14px; margin-top:1px; background:#c0c0c0; color:#000;
+  border:1px solid; border-color:#fff #000 #000 #fff; box-shadow:inset -1px -1px #808080; }
+[data-so="95"] .cb.cerrar { margin-left:2px; }
+[data-so="95"] .cb svg { width:8px; height:8px; stroke-width:1.6; }
+[data-so="95"] .cb:active { border-color:#000 #fff #fff #000; box-shadow:inset 1px 1px #808080; }
+[data-so="95"] .body { padding:14px 16px 4px; }
+[data-so="95"] code, [data-so="95"] .mono { border-color:#808080 #fff #fff #808080; }
+[data-so="95"] .boton { background:#c0c0c0; border:2px solid;
+  border-color:#fff #000 #000 #fff; box-shadow:inset -1px -1px #808080, inset 1px 1px #dfdfdf; }
+[data-so="95"] .boton:active { border-color:#000 #fff #fff #000; box-shadow:inset 1px 1px #808080; }
+[data-so="95"] .bar { border-color:#808080 #fff #fff #808080; }
+
+/* Windows XP (Luna) */
+body[data-so="xp"] { --escritorio:linear-gradient(180deg,#245edb 0%,#6aa5f0 48%,#9fd0f8 55%,#5aa02c 56%,#3c7d1b 100%);
+  --tx:#000; --enlace:#0000ee; --linea:#aca899; --code-bg:#fff; --code-bc:#7f9db9;
+  --nota-bg:#ffffe1; --nota-bc:#aca899; --bar-bg:#ece9d8; --bar-borde:0; --b-color:#000;
+  --tapa:2; --fuente:Tahoma,Verdana,sans-serif; }
+[data-so="xp"] .window { background:#0055ea; padding:0 0 3px; border-radius:8px 8px 0 0;
+  box-shadow:inset -1px -1px #00138c, inset 1px 1px #0831d9, inset -2px -2px #001ea0,
+  inset 2px 2px #166aee, inset -3px -3px #003bda, inset 3px 3px #0855dd, 2px 4px 14px rgba(0,0,0,.45); }
+[data-so="xp"] .title { height:30px; padding:3px 5px 3px 3px; border-radius:8px 8px 0 0;
+  background:linear-gradient(180deg,#0997ff,#0053ee 8%,#0050ee 40%,#06f 88%,#06f 93%,#005bff 95%,#003dd7 96%,#003dd7);
+  color:#fff; font:700 13px "Trebuchet MS",Tahoma,sans-serif; text-shadow:1px 1px #0f1089;
+  align-items:center; }
+[data-so="xp"] .titulo { padding-left:3px; }
+[data-so="xp"] .controles { gap:2px; }
+[data-so="xp"] .cb { width:21px; height:21px; color:#fff; border:1px solid #fff; border-radius:3px;
+  background:radial-gradient(circle at 90% 90%,#0054e9 0,#2263d5 55%,#4479e4 70%,#a3bbec 90%,#fff 100%);
+  box-shadow:none; }
+[data-so="xp"] .cb.cerrar { background:radial-gradient(circle at 90% 90%,#cc4600 0,#dc6527 55%,#cd7546 70%,#ffccb2 90%,#fff 100%); }
+[data-so="xp"] .cb svg { stroke-width:2; }
+[data-so="xp"] .body { background:#ece9d8; margin:0 3px; padding:14px 16px 4px; }
+[data-so="xp"] .boton { background:linear-gradient(180deg,#fff,#ecebe5 86%,#d8d0c4);
+  border:1px solid #003c74; border-radius:3px; }
+[data-so="xp"] .boton:hover { box-shadow:inset 0 0 0 2px #fcc757; }
+[data-so="xp"] .bar { border-top:1px solid #aca899; margin:16px -16px 0; padding:4px 16px; }
+
+/* Windows 7 (Aero) */
+body[data-so="7"] { --escritorio:radial-gradient(ellipse at 50% 20%,#59b6ee 0,#1d74c3 42%,#0a3d7d 100%);
+  --tx:#000; --enlace:#0066cc; --linea:#d5dfe5; --code-bg:#f5f8fa; --code-bc:#c5d0d8;
+  --nota-bg:#fffbe0; --nota-bc:#e0d9a8; --bar-bg:#f0f0f0; --bar-borde:0; --b-color:#000;
+  --rad-code:3px; --tapa:0; --fuente:"Segoe UI",Tahoma,sans-serif; }
+[data-so="7"] .window { border-radius:8px; padding:0 8px 8px; background:rgba(176,205,236,.82);
+  backdrop-filter:blur(10px); border:1px solid rgba(0,0,0,.55);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.7), 0 6px 22px rgba(0,0,0,.55); }
+[data-so="7"] .title { height:30px; font-size:12px; color:#000;
+  text-shadow:0 0 6px #fff,0 0 6px #fff,0 0 3px #fff; padding-left:2px; }
+[data-so="7"] .controles { align-self:flex-start; margin-right:-2px; }
+[data-so="7"] .cb { height:19px; width:27px; color:#fff; border:1px solid rgba(0,0,0,.55);
+  border-top:0; border-left-width:0; background:linear-gradient(#e6edf7 0,#bccce2 46%,#98aecb 50%,#c2d3ea 100%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.65); }
+[data-so="7"] .cb:first-child { border-left-width:1px; border-bottom-left-radius:5px; }
+[data-so="7"] .cb.cerrar { width:47px; border-bottom-right-radius:5px;
+  background:linear-gradient(#f0b6a9 0,#dd6a55 45%,#c3321b 50%,#dd6c52 100%); }
+[data-so="7"] .cb svg { stroke-width:1.8; stroke:#fff; filter:drop-shadow(0 0 1px #1c2c46) drop-shadow(0 0 1px #1c2c46); }
+[data-so="7"] .body { background:#fff; border:1px solid rgba(0,0,0,.55); padding:14px 16px 4px;
+  box-shadow:0 0 0 1px rgba(255,255,255,.5); }
+[data-so="7"] .boton { background:linear-gradient(#f2f2f2 45%,#dddddd 50%,#cfcfcf);
+  border:1px solid #707070; border-radius:3px; box-shadow:inset 0 0 0 1px rgba(255,255,255,.75); }
+[data-so="7"] .boton:hover { border-color:#3c7fb1;
+  background:linear-gradient(#eaf6fd 45%,#bee6fd 50%,#a7d9f5); }
+[data-so="7"] .bar { border-top:1px solid #dfdfdf; margin:16px -16px 0; padding:4px 16px; }
+
+/* Windows 10 */
+body[data-so="10"] { --escritorio:linear-gradient(135deg,#06265c 0%,#0078d7 55%,#2fb1f2 100%);
+  --tx:#000; --enlace:#0066cc; --linea:#e5e5e5; --code-bg:#f2f2f2; --code-bc:#d9d9d9;
+  --nota-bg:#fff8e1; --nota-bc:#f0d98a; --bar-bg:#f0f0f0; --bar-borde:0; --b-color:#000;
+  --tapa:0; --fuente:"Segoe UI",system-ui,sans-serif; }
+[data-so="10"] .window { background:#fff; border:1px solid #7a7a7a;
+  box-shadow:0 10px 30px rgba(0,0,0,.45); }
+[data-so="10"] .title { height:32px; background:#fff; font-size:12px; padding-left:8px; }
+[data-so="10"] .cb { width:46px; color:#000; background:transparent; border:0; }
+[data-so="10"] .cb svg { stroke-width:1; }
+[data-so="10"] .cb:hover { background:#e5e5e5; }
+[data-so="10"] .cb.cerrar:hover { background:#e81123; color:#fff; }
+[data-so="10"] .body { padding:14px 16px 4px; }
+[data-so="10"] .boton { background:#e1e1e1; border:1px solid #adadad; }
+[data-so="10"] .boton:hover { background:#e5f1fb; border-color:#0078d7; }
+[data-so="10"] .boton:active { background:#cce4f7; border-color:#005499; }
+[data-so="10"] .bar { border-top:1px solid #e0e0e0; margin:16px -16px 0; padding:4px 16px; }
+
+/* Windows 11 */
+body[data-so="11"] { --escritorio:radial-gradient(ellipse at 28% 38%,#9ccbff 0,#3f86ea 30%,#2b3fb8 62%,#0b1745 100%);
+  --tx:#1a1a1a; --enlace:#005fb8; --linea:#e5e5e5; --code-bg:#f3f3f3; --code-bc:#e0e0e0;
+  --nota-bg:#fff4ce; --nota-bc:#f0e0a0; --bar-bg:#f3f3f3; --bar-borde:0; --b-color:#1a1a1a;
+  --rad-code:4px; --tapa:0; --fuente:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif; }
+[data-so="11"] .window { background:#fff; border-radius:8px; border:1px solid rgba(0,0,0,.3);
+  box-shadow:0 12px 40px rgba(0,0,0,.4); overflow:hidden; }
+[data-so="11"] .title { height:32px; background:#f3f3f3; font-size:12px; padding-left:12px; }
+[data-so="11"] .cb { width:46px; color:#1a1a1a; background:transparent; border:0; }
+[data-so="11"] .cb svg { stroke-width:1; }
+[data-so="11"] .cb:hover { background:rgba(0,0,0,.06); }
+[data-so="11"] .cb.cerrar:hover { background:#c42b1c; color:#fff; }
+[data-so="11"] .body { padding:14px 16px 4px; }
+[data-so="11"] .boton { background:#fdfdfd; border:1px solid #e5e5e5;
+  border-bottom-color:#d0d0d0; border-radius:4px; }
+[data-so="11"] .boton:hover { background:#f6f6f6; }
+[data-so="11"] .bar { border-top:1px solid #e5e5e5; margin:16px -16px 0; padding:6px 16px; }
+
+/* Linux: Material Design en oscuro; el fondo es el Blue Grey 800 de la paleta Material */
+body[data-so="linux"] { --escritorio:#37474f;
+  --tx:#e3e3e3; --enlace:#8ab4f8; --linea:#3c4043; --code-bg:#2b2d31; --code-bc:transparent;
+  --nota-bg:#28303f; --nota-bc:#33425c; --bar-bg:transparent; --bar-borde:0; --b-color:#062e6f;
+  --rad-code:8px; --tapa:0; --fuente:Roboto,"Noto Sans",Cantarell,"Segoe UI",system-ui,sans-serif; }
+[data-so="linux"] .window { background:#202124; border-radius:12px; overflow:hidden;
+  box-shadow:0 24px 64px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.08); }
+/* Barra superior Material: icono y titulo a la izquierda, botones circulares a la derecha */
+[data-so="linux"] .title { height:56px; padding:0 10px 0 20px; align-items:center; background:#2b2d31;
+  color:#e3e3e3; font-size:14px; font-weight:500; letter-spacing:.01em;
+  box-shadow:0 2px 6px rgba(0,0,0,.4); position:relative; z-index:1; }
+[data-so="linux"] .titulo { gap:12px; }
+[data-so="linux"] .titulo img { width:22px; height:22px; }
+[data-so="linux"] .controles { margin-left:auto; align-self:center; gap:2px; }
+[data-so="linux"] .cb { width:34px; height:34px; border-radius:50%; color:#c4c7c5;
+  background:transparent; border:0; }
+[data-so="linux"] .cb svg { width:11px; height:11px; stroke-width:1.3; }
+[data-so="linux"] .cb:hover { background:rgba(255,255,255,.1); }
+[data-so="linux"] .cb.cerrar:hover { background:#d93025; color:#fff; }
+[data-so="linux"] .cb .bajo { display:none; }
+[data-so="linux"] .cb .medio { display:inline; }
+[data-so="linux"] .body { background:#1f1f1f; padding:18px 24px 6px; }
+[data-so="linux"] h2 { font-weight:500; color:#e8eaed; }
+[data-so="linux"] li::marker { color:#8ab4f8; }
+[data-so="linux"] .note { border-radius:16px; padding:12px 16px; }
+[data-so="linux"] .boton { background:#2b3c59; color:#d3e3fd; border:0; border-radius:20px; line-height:40px;
+  padding:0 26px; font-weight:500; letter-spacing:.01em; box-shadow:0 1px 3px rgba(0,0,0,.45);
+  transition:filter .15s ease, box-shadow .15s ease; }
+[data-so="linux"] .boton:hover { filter:brightness(1.1); box-shadow:0 3px 8px rgba(0,0,0,.5); }
+[data-so="linux"] .bar { border-top:1px solid #3c4043; margin:16px -24px 0; padding:12px 24px;
+  color:#9aa0a6; }
+
+/* macOS */
+body[data-so="mac"] { --escritorio:linear-gradient(135deg,#071a2e 0%,#0b4a6b 50%,#0a2c47 100%);
+  --tx:#1d1d1f; --enlace:#0a64d8; --linea:#e5e5e7; --code-bg:#f2f2f4; --code-bc:#dcdce0;
+  --nota-bg:#fff8e0; --nota-bc:#ecdca0; --bar-bg:#f5f5f7; --bar-borde:0; --b-color:#1d1d1f;
+  --rad-code:5px; --tapa:0;
+  --fuente:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif; }
+[data-so="mac"] .window { background:#fff; border-radius:10px; border:1px solid rgba(0,0,0,.28);
+  box-shadow:0 22px 60px rgba(0,0,0,.5), 0 0 0 .5px rgba(0,0,0,.2); overflow:hidden; }
+[data-so="mac"] .title { height:38px; background:linear-gradient(#ebe9eb,#d3d1d4); color:#4d4d4d;
+  font-size:13px; font-weight:600; border-bottom:1px solid #b9b7ba; align-items:center; }
+[data-so="mac"] .luces { display:flex; width:84px; }
+[data-so="mac"] .controles { display:none; }
+[data-so="mac"] .titulo { justify-content:center; }
+[data-so="mac"] .titulo img { display:none; }
+[data-so="mac"] .title::after { content:""; width:84px; }
+[data-so="mac"] .body { padding:14px 16px 4px; }
+[data-so="mac"] .boton { background:#fff; border:1px solid #d0d0d4;
+  border-bottom-color:#b8b8bc; border-radius:6px; box-shadow:0 1px 1px rgba(0,0,0,.08); }
+[data-so="mac"] .boton:active { background:#ececef; }
+[data-so="mac"] .bar { border-top:1px solid #e5e5e7; margin:16px -16px 0; padding:6px 16px; }
+</style>
+</head>
+<body data-so="7">
+
+<nav class="selector" aria-label="Estilo de la ventana">
+<div class="selector-titulo">Elige tu escritorio</div>
+<div class="temas" role="radiogroup">
+<div class="tema" role="radio" tabindex="0" data-so="95"><span class="mini"></span>Win 95</div>
+<div class="tema" role="radio" tabindex="0" data-so="xp"><span class="mini"></span>Win XP</div>
+<div class="tema" role="radio" tabindex="0" data-so="7"><span class="mini"></span>Win 7</div>
+<div class="tema" role="radio" tabindex="0" data-so="10"><span class="mini"></span>Win 10</div>
+<div class="tema" role="radio" tabindex="0" data-so="11"><span class="mini"></span>Win 11</div>
+<div class="tema" role="radio" tabindex="0" data-so="linux"><span class="mini"></span>Linux</div>
+<div class="tema" role="radio" tabindex="0" data-so="mac"><span class="mini"></span>Mac</div>
+</div>
+</nav>
+
+<div class="center">
+
+<div class="window">
+<div class="title">
+<div class="luces"><i></i><i></i><i></i></div>
+<div class="titulo"><img src="skin.ekskin/resources/icon.png" alt=""><span>EKSkin Repository</span></div>
+<div class="controles">
+<button type="button" class="cb min" aria-label="Minimizar" tabindex="-1"><svg viewBox="0 0 10 10"><path class="bajo" d="M1 8.5h7"/><path class="medio" d="M0 5.5h10"/></svg></button>
+<button type="button" class="cb max" aria-label="Maximizar" tabindex="-1"><svg viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9"/><path class="tapa" d="M0 1h10"/></svg></button>
+<button type="button" class="cb cerrar" aria-label="Cerrar" tabindex="-1"><svg viewBox="0 0 10 10"><path d="M.5 .5l9 9M9.5 .5l-9 9"/></svg></button>
+</div>
+</div>
+<div class="body">
+
+<p>Skin creada por <a href="https://t.me/rubensdfa1laberot/?direct">RubénSDFA1laberot</a>, <a href="https://espakodi.github.io/">EspaKodi</a></p>
+
+<h2>Instalar desde el repositorio (recomendado)</h2>
+<ol>
+<li>En Kodi: <strong>Ajustes</strong> &rarr; <strong>Interfaz</strong> &rarr;
+<strong>Explorador de archivos</strong> &rarr; <strong>Añadir fuente</strong>.</li>
+<li>En <code>&lt;Ninguno&gt;</code> pega esta dirección exacta:<br><br>
+<span class="mono"><strong>https://espakodi.github.io/ekskin/</strong></span></li>
+<li>Como nombre pon <code>ekskin</code> (o lo que quieras) y acepta.</li>
+<li>Ve a <strong>Ajustes</strong> &rarr; <strong>Add-ons</strong> &rarr;
+<strong>Instalar desde archivo zip</strong>.<br>
+<small>Si aparece un aviso de seguridad: <strong>Ajustes</strong> &rarr;
+<strong>Sistema</strong> &rarr; <strong>Add-ons</strong> &rarr; activa
+<em>Orígenes desconocidos</em>.</small></li>
+<li>Selecciona la fuente <code>ekskin</code> y el fichero
+<code>repository.ekskin-1.0.0.zip</code>.</li>
+<li>Cuando salga la notificación de add-on instalado, entra en
+<strong>Instalar desde repositorio</strong> &rarr; <strong>EKSkin Repository</strong>
+&rarr; <strong>Aspecto</strong> &rarr; <strong>EKSkin</strong> &rarr; <strong>Instalar</strong>.</li>
+</ol>
+
+<h2>Ya tenías la skin instalada a mano</h2>
+<div class="note">Kodi marca las instalaciones manuales y <strong>no las actualiza
+solas</strong>; para que empiece a recibir actualizaciones tienes que
+<strong>desinstalar el ZIP antiguo</strong> y repetir los pasos de arriba. Al
+instalar desde el repositorio, Kodi sustituye la copia anterior sin
+preguntarte nada.</div>
+
+<h2>Instalar la skin sin el repositorio</h2>
+<p>Descarga el zip y usa <strong>Add-ons</strong> &rarr;
+<strong>Instalar desde archivo zip</strong>. Esta vía <strong>no recibe
+actualizaciones</strong>.</p>
+<a href="skin.ekskin/skin.ekskin-1.0.0.zip">skin.ekskin-1.0.0.zip</a>
+
+<h2>Zip para instalar el repositorio</h2>
+<a href="repository.ekskin-1.0.0.zip">repository.ekskin-1.0.0.zip</a><br>
+
+<div class="botones">
+<a class="boton" href="https://espatv.github.io/">Web</a>
+<a class="boton" href="https://t.me/espadaily">Telegram</a>
+</div>
+<div class="bar">EKSkin 1.0.0 &middot; SHA-256: 57ae29bc0aee8c10b0c63e582ae10720b5ca4dd688bade1a4b69264b59916917</div>
+
+</div>
+</div>
+
+</div>
+
+<script>
+(function () {
+  var validos = ["95", "xp", "7", "10", "11", "linux", "mac"];
+  var temas = document.querySelectorAll(".tema");
+
+  function aplicar(so) {
+    document.body.setAttribute("data-so", so);
+    for (var i = 0; i < temas.length; i++) {
+      temas[i].setAttribute("aria-checked", String(temas[i].getAttribute("data-so") === so));
+    }
+  }
+
+  function elegir(so) {
+    aplicar(so);
+    // localStorage puede lanzar en ventanas privadas o con datos bloqueados
+    try { localStorage.setItem("ekskin-so", so); } catch (e) {}
+  }
+
+  var inicial = "7";
+  try {
+    var guardado = localStorage.getItem("ekskin-so");
+    if (validos.indexOf(guardado) >= 0) { inicial = guardado; }
+  } catch (e) {}
+  var hash = location.hash.slice(1);
+  if (validos.indexOf(hash) >= 0) { inicial = hash; }
+  aplicar(inicial);
+
+  for (var i = 0; i < temas.length; i++) {
+    temas[i].addEventListener("click", function () {
+      elegir(this.getAttribute("data-so"));
+    });
+    temas[i].addEventListener("keydown", function (ev) {
+      var pos = validos.indexOf(this.getAttribute("data-so"));
+      if (ev.key === "Enter" || ev.key === " ") {
+        ev.preventDefault();
+        elegir(this.getAttribute("data-so"));
+      } else if (ev.key === "ArrowRight" || ev.key === "ArrowLeft") {
+        ev.preventDefault();
+        var sig = temas[(pos + (ev.key === "ArrowRight" ? 1 : validos.length - 1)) % validos.length];
+        sig.focus();
+        elegir(sig.getAttribute("data-so"));
+      }
+    });
+  }
+})();
+</script>
+</body>
+</html>
